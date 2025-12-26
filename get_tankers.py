@@ -24,7 +24,7 @@ end_page = int(input("Enter the page number to stop at: "))
 
 try:
     for p in range(start_page, end_page + 1):
-        url = f"https://www.vesselfinder.com/vessels?page={p}&minYear=1960&minLength=150&type=6&sort=5&dir=2"
+        url = f"https://www.vesselfinder.com/vessels?page={p}&minYear=1960&minLength=150&type=6&sort=5&dir=1"
         print(f"--- Navigating to Page {p} ---")
         driver.get(url)
 
