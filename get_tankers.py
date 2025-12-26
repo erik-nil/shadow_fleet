@@ -1,49 +1,93 @@
-# %%
-
+import pandas as pd
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
-from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
 import time
-import pandas as pd
+import random
 
-# Load the file specifically as a DataFrame
-file_path = r"C:\Users\erik_\OneDrive\Skrivbord\Akademisk Comeback 25\Python_linc\Project\shadow_fleet\shadow_fleet_df.csv"
-shadow_fleet_df = pd.read_csv(file_path)
-shadow_fleet_df.set_index("IMO", inplace=True)
-
-# %%
+# 1. Connect to your existing Chrome
+# Open chrome with this line "C:\Program Files\Google\Chrome\Application\chrome.exe" --remote-debugging-port=9222 --user-data-dir="C:\temp_chrome"
+# go to localhost:9222
+# start this python program
+# navigate to vesselfinder
+# start to scrape
 chrome_options = Options()
-extension_path = r"C:\Users\erik_\OneDrive\Skrivbord\Akademisk Comeback 25\Python_linc\Project\shadow_fleet\adblock.crx"
-chrome_options.add_extension(extension_path)
-
+chrome_options.add_experimental_option("debuggerAddress", "127.0.0.1:9222")
 driver = webdriver.Chrome(options=chrome_options)
-driver.get("https://www.marinevesseltraffic.com/ship-owner-manager-ism-data")
+
+all_vessels = []
+CSV_FILENAME = "vesselfinder_tankers_full.csv"
+
+# 2. Set your range
+start_page = int(input("Enter the page number you are currently on: "))
+end_page = int(input("Enter the page number to stop at: "))
 
 try:
-    # Wait up to 10 seconds for the "Consent" text to appear and be clickable
-    consent_button = WebDriverWait(driver, 10).until(
-        EC.element_to_be_clickable((By.XPATH, "//p[text()='Consent']"))
-    )
-    consent_button.click()
-    print("Cookies accepted.")
-except Exception as e:
-    print("Consent button not found or already closed:", e)
+    for p in range(start_page, end_page + 1):
+        url = f"https://www.vesselfinder.com/vessels?page={p}&type=6"
+        print(f"--- Navigating to Page {p} ---")
+        driver.get(url)
 
-# Find the search box
-for imo in shadow_fleet_df.index:
-    # 1. Locate the search box
-    search_box = driver.find_element(By.ID, "search-main")  # Note: use 'ID' in caps
+        # --- IMPROVEMENT 1: AUTO-SCROLL TO BOTTOM ---
+        print("Scrolling to load all data...")
+        # Scroll down in increments to trigger lazy-loading
+        for i in range(1, 5):
+            driver.execute_script(
+                f"window.scrollTo(0, document.body.scrollHeight * {i/4});"
+            )
+            time.sleep(0.5)
+        time.sleep(1)  # Final stabilization
 
-    # 2. Clear previous entry (important for consecutive searches!)
-    search_box.clear()
+        if "Verify you are human" in driver.page_source:
+            input("Captcha detected! Solve it in the browser, then press ENTER here...")
 
-    # 3. Enter IMO and hit Enter
-    search_box.send_keys(str(imo) + Keys.ENTER)
+        # 3. Scrape the rows
+        rows = driver.find_elements(
+            By.XPATH, "//tr[descendant::a[contains(@class, 'ship-link')]]"
+        )
 
-    # 4. Optional: Add a small wait for the page to load
-    time.sleep(20)
+        for row in rows:
+            try:
+                link_element = row.find_element(By.CLASS_NAME, "ship-link")
+                ship_url = link_element.get_attribute("href")
+                imo = ship_url.split("/")[-1] if ship_url else "N/A"
 
-# %%
+                # --- IMPROVEMENT 2: EXTRACT FLAG (COUNTRY) ---
+                # The flag name is stored in the 'title' attribute of the flag-icon div
+                try:
+                    flag_element = row.find_element(By.CLASS_NAME, "flag-icon")
+                    flag_land = flag_element.get_attribute("title")
+                except:
+                    flag_land = "Unknown"
+
+                all_vessels.append(
+                    {
+                        "IMO": imo,
+                        "Name": row.find_element(By.CLASS_NAME, "slna").text.strip(),
+                        "Type": row.find_element(By.CLASS_NAME, "slty").text.strip(),
+                        "Flag": flag_land,
+                        "Built": row.find_element(By.CLASS_NAME, "v3").text.strip(),
+                        "GT": row.find_element(By.CLASS_NAME, "v4").text.strip(),
+                        "DWT": row.find_element(By.CLASS_NAME, "v5").text.strip(),
+                        "Size": row.find_element(By.CLASS_NAME, "v6").text.strip(),
+                    }
+                )
+            except:
+                continue
+
+        print(f"Successfully scraped page {p}. Total ships: {len(all_vessels)}")
+
+        if p % 5 == 0:
+            pd.DataFrame(all_vessels).drop_duplicates(subset=["IMO"]).to_csv(
+                CSV_FILENAME, index=False
+            )
+            print("--- Progress saved to CSV ---")
+
+except KeyboardInterrupt:
+    print("Stopped by user.")
+
+finally:
+    if all_vessels:
+        df = pd.DataFrame(all_vessels).drop_duplicates(subset=["IMO"])
+        df.to_csv(CSV_FILENAME, index=False)
+        print(f"Finished. Total unique ships saved: {len(df)}")
