@@ -5,18 +5,23 @@ from sklearn.model_selection import train_test_split
 shadow_fleet_df = pd.read_csv("shadow_fleet.csv")
 shadow_fleet_df.set_index("IMO", inplace=True)
 
+non_shadow_fleet_countries = pd.read_csv("non_shadow_fleet_countries.csv")
 
 all_fleet_df = pd.read_csv("vessels.csv")
 all_fleet_df.set_index("IMO", inplace=True)
 all_fleet_df.drop("Name", axis=1, inplace=True)
 
-all_fleet_df["Shadow Fleet"] = all_fleet_df.index.isin(
-    shadow_fleet_df.index.astype(int)
-)
+all_fleet_df["Flag"] = all_fleet_df["Flag"].replace("-", pd.NA)
 
-all_fleet_df_DATA = all_fleet_df.drop("Shadow Fleet", axis=1)
-all_fleet_df_TARGET = all_fleet_df["Shadow Fleet"]
+all_fleet_df["Shadow Fleet"] = pd.NA
+all_fleet_df.loc[all_fleet_df.index.isin(shadow_fleet_df.index), 'Shadow Fleet'] = 1
+all_fleet_df.loc[all_fleet_df['Shadow Fleet'].isna() & all_fleet_df['Flag'].isin(non_shadow_fleet_countries), 'Shadow Fleet'] = 0
 
-train_DATA, test_DATA, train_TARGET, test_TARGET = train_test_split(
-    all_fleet_df_DATA, all_fleet_df_TARGET, test_size=0.2, random_state=42
-)
+print(all_fleet_df[all_fleet_df['Flag'].isna()])
+
+# all_fleet_df_DATA = all_fleet_df.drop("Shadow Fleet", axis=1)
+# all_fleet_df_TARGET = all_fleet_df["Shadow Fleet"]
+
+# train_DATA, test_DATA, train_TARGET, test_TARGET = train_test_split(
+#     all_fleet_df_DATA, all_fleet_df_TARGET, test_size=0.2, random_state=42
+# )
