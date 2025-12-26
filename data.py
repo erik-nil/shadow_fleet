@@ -762,7 +762,6 @@ ZIRAN (9041655)
 import pandas as pd
 import re
 
-
 lines = raw_data.strip().split("\n")
 data_list = []
 
@@ -779,3 +778,8 @@ for line in lines:
 # Create DataFrame and set IMO as the index
 shadow_fleet_df = pd.DataFrame(data_list)
 shadow_fleet_df.set_index("IMO", inplace=True)
+
+
+all_fleet_df = pd.read_csv('vesselfinder_tankers_full.csv')
+all_fleet_df.set_index("IMO", inplace=True)
+all_fleet_df.drop("Name", axis=1, inplace=True)
