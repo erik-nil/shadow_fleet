@@ -782,4 +782,4 @@ shadow_fleet_df.set_index("IMO", inplace=True)
 
 all_fleet_df = pd.read_csv('vesselfinder_tankers_full.csv')
 all_fleet_df.set_index("IMO", inplace=True)
-print(all_fleet_df)
+all_fleet_df.drop("Name", axis=1, inplace=True)
