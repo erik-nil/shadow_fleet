@@ -780,8 +780,8 @@ shadow_fleet_df = pd.DataFrame(data_list)
 shadow_fleet_df.set_index("IMO", inplace=True)
 
 
-all_fleet_df = pd.read_csv('vesselfinder_tankers_full.csv')
+all_fleet_df = pd.read_csv("vessels.csv")
 all_fleet_df.set_index("IMO", inplace=True)
 all_fleet_df.drop("Name", axis=1, inplace=True)
 
-all_fleet_df['Shadow Fleet'] = all_fleet_df.index.isin(shadow_fleet_df.index)
+all_fleet_df["Shadow Fleet"] = all_fleet_df.index.isin(shadow_fleet_df.index)
