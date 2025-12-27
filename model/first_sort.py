@@ -13,7 +13,7 @@ SHADOW_FILE = "vessel_data/shadow_vessels.csv"  # Dina 600 bekräftade
 UNKNOWN_FILE = "vessel_data/unknown_vessels.csv"  # Dina 8000 okända
 OUTPUT_FILE = "suspect_vessels.csv"
 
-def load_and_clean(filepath, label):
+def load_and_clean(filepath, label: int) -> pd.DataFrame:
     """Laddar data och säkerställer rätt format på features."""
     df = pd.read_csv(filepath)
 
@@ -36,8 +36,35 @@ def load_and_clean(filepath, label):
 
     return df
 
+def exploratory_data_analysis(df: pd.DataFrame):
+    """
+    Utför enkel EDA på en DataFrame:
+    - Visar grundläggande info
+    - Summerar numeriska kolumner
+    - Visar distributioner av kategoriska kolumner
+    """
+    # Grundläggande info
+    print("INFO:")
+    print(df.info())
+    print("\nDESCRIBE:")
+    print(df.describe())
 
-def main():
+    # Saknade värden
+    print("\nMissing values per column:")
+    print(df.isna().sum())
+
+    # Kategoriska kolumner
+    cat_cols = df.select_dtypes(include="object").columns
+    for col in cat_cols:
+        print(f"\nValue counts for {col}:")
+        print(df[col].value_counts(normalize=True))
+
+    # Numeriska kolumner
+    num_cols = df.select_dtypes(include="number").columns
+    print("\nSummary statistics for numerical columns:")
+    print(df[num_cols].describe())
+
+def main() -> None:
     print("1. Laddar och förbereder datamängder...")
     shadow_df = load_and_clean(SHADOW_FILE, 1)
     unknown_df = load_and_clean(UNKNOWN_FILE, 0)
@@ -131,4 +158,10 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    shadow_df = load_and_clean(SHADOW_FILE, 1)
+    unknown_df = load_and_clean(UNKNOWN_FILE, 0)
+    df = pd.concat([shadow_df, unknown_df])
+
+    exploratory_data_analysis(df)
+
+    #main()
