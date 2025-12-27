@@ -10,7 +10,7 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 
 # --- KONFIGURATION ---
-DB_FILE = "shadow_fleet.db"
+DB_FILE = "scrapers/shadow_fleet_scrape.db"
 INPUT_CSV = "shadow_fleet_imo_names.csv"
 CHROME_PORT = "127.0.0.1:9222"
 
@@ -54,6 +54,7 @@ def go_to_ship(driver, imo):
         script = f"document.formShip.P_IMO.value='{imo}';document.formShip.submit();"
         driver.execute_script(script)
         # Vänta på att sidan laddar (t.ex. leta efter 'Ship Particulars' eller felmeddelande)
+        time.sleep(random.uniform(1, 4))  # Vänta lite för att låta sidan börja ladda
         WebDriverWait(driver, 10).until(
             EC.presence_of_element_located((By.CLASS_NAME, "blocLSMobile"))
         )
