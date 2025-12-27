@@ -28,7 +28,6 @@ try:
         print(f"--- Navigating to Page {p} ---")
         driver.get(url)
 
-        # --- IMPROVEMENT 1: AUTO-SCROLL TO BOTTOM ---
         print("Scrolling to load all data...")
         # Scroll down in increments to trigger lazy-loading
         for i in range(1, 5):
@@ -36,7 +35,7 @@ try:
                 f"window.scrollTo(0, document.body.scrollHeight * {i/4});"
             )
             time.sleep(0.5)
-        time.sleep(1)  # Final stabilization
+        time.sleep(1)  # Wait a bit for any remaining data to load
 
         if "Verify you are human" in driver.page_source:
             input("Captcha detected! Solve it in the browser, then press ENTER here...")
@@ -51,9 +50,6 @@ try:
                 link_element = row.find_element(By.CLASS_NAME, "ship-link")
                 ship_url = link_element.get_attribute("href")
                 imo = ship_url.split("/")[-1] if ship_url else "N/A"
-
-                # --- IMPROVEMENT 2: EXTRACT FLAG (COUNTRY) ---
-                # The flag name is stored in the 'title' attribute of the flag-icon div
                 try:
                     flag_element = row.find_element(By.CLASS_NAME, "flag-icon")
                     flag_land = flag_element.get_attribute("title")
