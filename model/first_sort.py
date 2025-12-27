@@ -17,21 +17,20 @@ def load_and_clean(filepath, label):
     """Laddar data och säkerställer rätt format på features."""
     df = pd.read_csv(filepath)
 
-    # Beräkna ålder från byggår
-    df["Built"] = pd.to_numeric(df["Built"], errors="coerce")
-    df["Age"] = 2025 - df["Built"]
-
     # Konvertera numeriska värden
+    df["Built"] = pd.to_numeric(df["Built"], errors="coerce")
     df["GT"] = pd.to_numeric(df["GT"], errors="coerce")
     df["DWT"] = pd.to_numeric(df["DWT"], errors="coerce")
+
+    # Beräkna ålder från byggår
+    df["Age"] = 2025 - df["Built"]
 
     # Sätt label
     df["is_shadow"] = label
 
     # Behåll endast relevanta kolumner för modellen + IMO för spårbarhet
-    # TODO:Borde ta bort namn och IMO?
     cols_to_keep = ["IMO", "Name", "Type", "Flag", "Age", "GT", "DWT", "is_shadow"]
-    return df[cols_to_keep]
+    return df[cols_to_keep].set_index("IMO")
 
 
 def main():
