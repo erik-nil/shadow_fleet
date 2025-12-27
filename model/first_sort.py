@@ -6,31 +6,35 @@ from sklearn.compose import ColumnTransformer
 from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.utils import resample
+import matplotlib.pyplot as plt
 
 # --- FILNAMN ---
 SHADOW_FILE = "vessel_data/shadow_vessels.csv"  # Dina 600 bekräftade
 UNKNOWN_FILE = "vessel_data/unknown_vessels.csv"  # Dina 8000 okända
 OUTPUT_FILE = "suspect_vessels.csv"
 
-
 def load_and_clean(filepath, label):
     """Laddar data och säkerställer rätt format på features."""
     df = pd.read_csv(filepath)
+
+    # Dela upp size
+    df[["Length", "Width"]] = df["Size"].str.split("/", expand=True)
+    df.drop("Size", axis=1, inplace=True)
 
     # Konvertera numeriska värden
     df["Built"] = pd.to_numeric(df["Built"], errors="coerce")
     df["GT"] = pd.to_numeric(df["GT"], errors="coerce")
     df["DWT"] = pd.to_numeric(df["DWT"], errors="coerce")
+    df["Length"] = pd.to_numeric(df["Length"], errors="coerce")
+    df["Width"] = pd.to_numeric(df["Width"], errors="coerce")
 
-    # Beräkna ålder från byggår
-    df["Age"] = 2025 - df["Built"]
+    # Slår ihop "-" och "Unknown"
+    df["Flag"].replace("-", "Unknown", inplace=True)
 
     # Sätt label
     df["is_shadow"] = label
 
-    # Behåll endast relevanta kolumner för modellen + IMO för spårbarhet
-    cols_to_keep = ["IMO", "Name", "Type", "Flag", "Age", "GT", "DWT", "is_shadow"]
-    return df[cols_to_keep].set_index("IMO")
+    return df
 
 
 def main():
@@ -44,19 +48,19 @@ def main():
     train_df = pd.concat([shadow_df, unknown_df])
 
     # --- DEFINIERA FEATURES ---
-    features = ["Type", "Flag", "Age", "GT", "DWT"]
+    features = ["Type", "Flag", "Built", "GT", "DWT"]
     X_train = train_df[features]
     y_train = train_df["is_shadow"]
 
     # --- BYGG PIPELINE ---
     # (Samma preprocessor som förut...)
-    num_cols = ["Age", "GT", "DWT"]
+    num_cols = ["Built", "GT", "DWT"]
     cat_cols = ["Type", "Flag"]
 
     num_transformer = SimpleImputer(strategy="median")
     cat_transformer = Pipeline(
         steps=[
-            ("imputer", SimpleImputer(strategy="constant", fill_value="Unknown_country")),
+            ("imputer", SimpleImputer(strategy="constant", fill_value="Unknown")),
             ("onehot", OneHotEncoder(handle_unknown="ignore")),
         ]
     )
@@ -95,7 +99,8 @@ def main():
     unknown_df["Shadow_Probability"] = model.predict_proba(X_unknown)[:, 1]
 
     # Filtrera på tröskelvärde
-    priority_list = unknown_df[unknown_df["Shadow_Probability"] >= 0.80]
+    threshold = 0.8
+    priority_list = unknown_df[unknown_df["Shadow_Probability"] >= threshold]
     priority_list = priority_list.sort_values(by="Shadow_Probability", ascending=False)
 
     priority_list.to_csv(OUTPUT_FILE, index=False)
@@ -104,6 +109,25 @@ def main():
     print(
         f"KLART! {len(priority_list)} fartyg hittade med sannolikhet över {threshold*100}%."
     )
+    
+
+    # Extrahera feature importance
+    importances = model.named_steps['classifier'].feature_importances_
+
+    # Omvandla till ett DataFrame
+    feature_names = model.named_steps['preprocessor'].get_feature_names_out()
+    feat_imp_df = pd.DataFrame({
+        'feature': feature_names,
+        'importance': importances
+    }).sort_values(by='importance', ascending=False)
+
+    print(feat_imp_df)
+
+    # Visualisera
+    plt.figure(figsize=(10,6))
+    plt.barh(feat_imp_df['feature'], feat_imp_df['importance'])
+    plt.xlabel("Feature Importance")
+    plt.show()
 
 
 if __name__ == "__main__":
