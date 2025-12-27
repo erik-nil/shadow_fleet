@@ -18,6 +18,8 @@ all_fleet_df.loc[all_fleet_df.index.isin(shadow_fleet_df.index), 'Shadow Fleet']
 all_fleet_df.loc[all_fleet_df['Shadow Fleet'].isna() & all_fleet_df['Flag'].isin(non_shadow_fleet_countries), 'Shadow Fleet'] = 0
 
 pred_Data = all_fleet_df[all_fleet_df["Shadow Fleet"].isna()]
+pred_Data.drop("Shadow Fleet", axis=1, inplace=True)
+
 all_fleet_df["Shadow Fleet".isna()]
 all_fleet_df = all_fleet_df[all_fleet_df["Shadow Fleet".notna()]]
 
