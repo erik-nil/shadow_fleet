@@ -19,7 +19,7 @@ def load_and_clean(filepath, label):
 
     # Dela upp size
     df[["Length", "Width"]] = df["Size"].str.split("/", expand=True)
-    df.drop("Size", axis=1, inplace=True)
+    df = df.drop("Size", axis=1)
 
     # Konvertera numeriska värden
     df["Built"] = pd.to_numeric(df["Built"], errors="coerce")
@@ -29,7 +29,7 @@ def load_and_clean(filepath, label):
     df["Width"] = pd.to_numeric(df["Width"], errors="coerce")
 
     # Slår ihop "-" och "Unknown"
-    df["Flag"].replace("-", "Unknown", inplace=True)
+    df["Flag"] = df["Flag"].replace("-", "Unknown")
 
     # Sätt label
     df["is_shadow"] = label
@@ -48,13 +48,13 @@ def main():
     train_df = pd.concat([shadow_df, unknown_df])
 
     # --- DEFINIERA FEATURES ---
-    features = ["Type", "Flag", "Built", "GT", "DWT"]
+    features = ["Type", "Flag", "Built", "GT", "DWT", "Length", "Width"]
     X_train = train_df[features]
     y_train = train_df["is_shadow"]
 
     # --- BYGG PIPELINE ---
     # (Samma preprocessor som förut...)
-    num_cols = ["Built", "GT", "DWT"]
+    num_cols = ["Built", "GT", "DWT", "Length", "Width"]
     cat_cols = ["Type", "Flag"]
 
     num_transformer = SimpleImputer(strategy="median")
