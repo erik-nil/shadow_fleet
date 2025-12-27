@@ -56,7 +56,7 @@ def main():
     num_transformer = SimpleImputer(strategy="median")
     cat_transformer = Pipeline(
         steps=[
-            ("imputer", SimpleImputer(strategy="constant", fill_value="Unknown")),
+            ("imputer", SimpleImputer(strategy="constant", fill_value="Unknown_country")),
             ("onehot", OneHotEncoder(handle_unknown="ignore")),
         ]
     )
@@ -92,13 +92,10 @@ def main():
     # --- PREDIKTION ---
     print("4. Analyserar...")
     X_unknown = unknown_df[features]
-    probabilities = model.predict_proba(X_unknown)[:, 1]
-
-    unknown_df["Shadow_Probability"] = probabilities
+    unknown_df["Shadow_Probability"] = model.predict_proba(X_unknown)[:, 1]
 
     # Filtrera på tröskelvärde
-    threshold = 0.80
-    priority_list = unknown_df[unknown_df["Shadow_Probability"] >= threshold]
+    priority_list = unknown_df[unknown_df["Shadow_Probability"] >= 0.80]
     priority_list = priority_list.sort_values(by="Shadow_Probability", ascending=False)
 
     priority_list.to_csv(OUTPUT_FILE, index=False)
