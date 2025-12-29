@@ -49,8 +49,8 @@ except FileNotFoundError:
 
 # --- BERÄKNA GLOBALA GRAF-GRÄNSER (FÖR ATT LÅSA AXLARNA) ---
 # Vi räknar ut max-värdena för HELA datasetet en gång, så vi kan låsa graferna till detta.
-MAX_AGE = df["Age"].max() * 1.05 if "Age" in df.columns else 50
-MAX_GT = df["GT"].max() * 1.05 if "GT" in df.columns else 100000
+MAX_AGE = df["Age"].max() * 1.05
+MAX_GT = df["GT"].max() * 1.05
 
 # Feature Importance Data
 feature_data = pd.DataFrame(
@@ -370,7 +370,7 @@ app.layout = dbc.Container(
                                 )  # Padding runt hela flikens innehåll
                             ],
                         ),
-                        # TAB 2: MODEL INSIGHTS
+                        # TAB 2: MODEL INSIGHTS (Uppdaterad storlek)
                         dbc.Tab(
                             label="Model Insights",
                             children=[
@@ -378,6 +378,7 @@ app.layout = dbc.Container(
                                     [
                                         dbc.Row(
                                             [
+                                                # Centrerad kolumn med bredd 8 (istället för 12) för bättre proportioner
                                                 dbc.Col(
                                                     [
                                                         dbc.Card(
@@ -405,9 +406,10 @@ app.layout = dbc.Container(
                                                                                 template="plotly_white",
                                                                                 color="Importance",
                                                                                 color_continuous_scale="Blues",
-                                                                            ).update_layout(
-                                                                                height=600
-                                                                            ),
+                                                                            ),  # Tog bort update_layout(height=600)
+                                                                            style={
+                                                                                "height": "45vh"
+                                                                            },  # Samma höjd som övriga grafer
                                                                         ),
                                                                     ]
                                                                 )
@@ -415,8 +417,9 @@ app.layout = dbc.Container(
                                                             className="shadow-sm border-0 mt-4",
                                                         )
                                                     ],
-                                                    width=12,
-                                                )
+                                                    width=8,
+                                                    className="mx-auto",
+                                                )  # mx-auto centrerar kolumnen
                                             ]
                                         )
                                     ],
@@ -426,7 +429,7 @@ app.layout = dbc.Container(
                         ),
                     ],
                     className="mt-3",
-                )  # Marginal mellan tabs och innehåll
+                )
             ],
             style={"height": "100%", "overflowY": "auto"},
         ),
@@ -438,7 +441,7 @@ app.layout = dbc.Container(
         "flexDirection": "column",
         "overflow": "hidden",
         "backgroundColor": "#f4f6f9",
-    },  # Ljusgrå bakgrund för proffsigare look
+    },
 )
 
 
