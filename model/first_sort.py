@@ -70,16 +70,26 @@ def exploratory_data_analysis(df: pd.DataFrame):
     print(df[num_cols].describe())
 
 
-def feature_selection(df:pd.DataFrame) -> None:
+def feature_selection(df: pd.DataFrame) -> None:
+
     ### Korrelation för numeriska cols 
     num_cols = df.select_dtypes(include="number").columns.drop("is_shadow")
     corr_matrix = df[num_cols].corr()
-
     sns.heatmap(corr_matrix, annot=True, cmap="coolwarm")
-    plt.show() # VISAR PÅ LÅG KORRELATION FÖRUTOM MELLAN STORLEKSVARIABLERINA GT, DWT, LENGTH & WIDTH
 
-    return None
+    plt.show() # VISAR PÅ LÅG KORRELATION FÖRUTOM MELLAN STORLEKSVARIABLERINA GT, DWT, LENGTH & WIDTH -> VI BESLUTAR ATT TA BORT WITDH OCH GT.
 
+def feature_evaluation(df: pd.DataFrame, model: Pipeline) -> pd.DataFrame:
+
+    ### Importance för olika variabler i modellen
+    rf = model.named_steps["classifier"]
+    feat_names = model.named_steps["preprocessor"].get_feature_names_out()
+    importances = rf.feature_importances_
+
+    feat_imp_df = pd.DataFrame({"feature": feat_names, "importance": importances})
+    feat_imp_df = feat_imp_df.sort_values(by="importance", ascending=False)
+
+    return feat_imp_df
 
 
 def model_building(train_df: pd.DataFrame, features: list[str]) -> Pipeline:
@@ -143,12 +153,13 @@ if __name__ == "__main__":
 
     full_df = pd.concat([shadow_df, unknown_df])
 
-    # exploratory_data_analysis(full_df)
+    exploratory_data_analysis(full_df)
 
     feature_selection(full_df)
 
-    # features = ["Type", "Flag", "Built", "GT", "DWT", "Length", "Width"]
-    # model = model_building(full_df, features)
+    features = ["Type", "Flag", "Built", "DWT", "Length"]
+    model = model_building(full_df, features)
+    
+    suspect_df = model_prediction(unknown_df, features, model)
 
-    # suspect_df = model_prediction(unknown_df, features, model)
-    # print(suspect_df)
+    feature_evaluation(full_df, model)
