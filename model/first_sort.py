@@ -40,7 +40,6 @@ def load_and_clean(filepath, label: int) -> pd.DataFrame:
 
     return df
 
-
 def exploratory_data_analysis(df: pd.DataFrame):
     """
     Utför enkel EDA på en DataFrame:
@@ -69,7 +68,6 @@ def exploratory_data_analysis(df: pd.DataFrame):
     print("\nSummary statistics for numerical columns:")
     print(df[num_cols].describe())
 
-
 def feature_selection(df: pd.DataFrame) -> None:
 
     ### Korrelation för numeriska cols 
@@ -87,10 +85,16 @@ def feature_evaluation(df: pd.DataFrame, model: Pipeline) -> pd.DataFrame:
     importances = rf.feature_importances_
 
     feat_imp_df = pd.DataFrame({"feature": feat_names, "importance": importances})
+
+    feat_imp_df["feature"] = feat_imp_df["feature"].str.replace("cat__","")
+    feat_imp_df["feature"] = feat_imp_df["feature"].str.replace("num__","")
+
+    feat_imp_df["feature"] = feat_imp_df["feature"].str.split("_").str[0]
+
+    feat_imp_df = feat_imp_df.groupby("feature")["importance"].sum().reset_index()
     feat_imp_df = feat_imp_df.sort_values(by="importance", ascending=False)
 
     return feat_imp_df
-
 
 def model_building(train_df: pd.DataFrame, features: list[str]) -> Pipeline:
     X_train = train_df[features]
@@ -133,7 +137,6 @@ def model_building(train_df: pd.DataFrame, features: list[str]) -> Pipeline:
 
     return rf_model
 
-
 def model_prediction(unknown_df: pd.DataFrame, features: list[str], model: Pipeline) -> pd.DataFrame:
     X_unknown = unknown_df[features]
     unknown_df["Shadow_Probability"] = model.predict_proba(X_unknown)[:, 1]
@@ -162,4 +165,4 @@ if __name__ == "__main__":
     
     suspect_df = model_prediction(unknown_df, features, model)
 
-    feature_evaluation(full_df, model)
+    print(feature_evaluation(full_df, model))
