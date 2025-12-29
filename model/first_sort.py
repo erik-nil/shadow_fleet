@@ -40,7 +40,6 @@ def load_and_clean(filepath, label: int) -> pd.DataFrame:
 
     return df
 
-
 def exploratory_data_analysis(df: pd.DataFrame):
     """
     Utför enkel EDA på en DataFrame:
@@ -69,7 +68,6 @@ def exploratory_data_analysis(df: pd.DataFrame):
     print("\nSummary statistics for numerical columns:")
     print(df[num_cols].describe())
 
-
 def feature_selection(df: pd.DataFrame) -> None:
 
     ### Korrelation för numeriska cols 
@@ -87,10 +85,16 @@ def feature_evaluation(df: pd.DataFrame, model: Pipeline) -> pd.DataFrame:
     importances = rf.feature_importances_
 
     feat_imp_df = pd.DataFrame({"feature": feat_names, "importance": importances})
+
+    feat_imp_df["feature"] = feat_imp_df["feature"].str.replace("cat__","")
+    feat_imp_df["feature"] = feat_imp_df["feature"].str.replace("num__","")
+
+    feat_imp_df["feature"] = feat_imp_df["feature"].str.split("_").str[0]
+
+    feat_imp_df = feat_imp_df.groupby("feature")["importance"].sum().reset_index()
     feat_imp_df = feat_imp_df.sort_values(by="importance", ascending=False)
 
     return feat_imp_df
-
 
 def model_building(train_df: pd.DataFrame, features: list[str]) -> Pipeline:
     X_train = train_df[features]
@@ -124,6 +128,7 @@ def model_building(train_df: pd.DataFrame, features: list[str]) -> Pipeline:
                     max_depth=12,
                     class_weight="balanced",  # <--- HÄR ÄR MAGIN
                     random_state=42,
+                    oob_score=True
                 ),
             ),
         ]
@@ -132,7 +137,6 @@ def model_building(train_df: pd.DataFrame, features: list[str]) -> Pipeline:
     rf_model.fit(X_train, y_train)
 
     return rf_model
-
 
 def model_prediction(unknown_df: pd.DataFrame, features: list[str], model: Pipeline) -> pd.DataFrame:
     X_unknown = unknown_df[features]
@@ -144,6 +148,15 @@ def model_prediction(unknown_df: pd.DataFrame, features: list[str], model: Pipel
     suspect_df = suspect_df.sort_values(by="Shadow_Probability", ascending=False)
 
     return suspect_df
+
+def model_evaluation(shadow_df: pd.DataFrame, model: Pipeline) -> None:
+    ### Beräknar OOB-score
+    rf = model.named_steps["classifier"]
+    print("OOB score:", rf.oob_score_)
+
+    ### Beräknar sensitivity för modellen
+    
+
 
 
 if __name__ == "__main__":
@@ -162,4 +175,8 @@ if __name__ == "__main__":
     
     suspect_df = model_prediction(unknown_df, features, model)
 
-    feature_evaluation(full_df, model)
+    feature_importance = feature_evaluation(full_df, model)
+
+    model_evaluation(model)
+
+
