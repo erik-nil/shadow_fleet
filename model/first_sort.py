@@ -7,6 +7,7 @@ from sklearn.pipeline import Pipeline
 from sklearn.impute import SimpleImputer
 from sklearn.utils import resample
 import matplotlib.pyplot as plt
+import seaborn as sns
 
 # --- FILNAMN ---
 SHADOW_FILE = (
@@ -69,8 +70,16 @@ def exploratory_data_analysis(df: pd.DataFrame):
     print(df[num_cols].describe())
 
 
-def feature_selection():  ### INTE PÅBÖRJAD
+def feature_selection(df:pd.DataFrame) -> None:
+    ### Korrelation för numeriska cols 
+    num_cols = df.select_dtypes(include="number").columns.drop("is_shadow")
+    corr_matrix = df[num_cols].corr()
+
+    sns.heatmap(corr_matrix, annot=True, cmap="coolwarm")
+    plt.show() # VISAR PÅ LÅG KORRELATION FÖRUTOM MELLAN STORLEKSVARIABLERINA GT, DWT, LENGTH & WIDTH
+
     return None
+
 
 
 def model_building(train_df: pd.DataFrame, features: list[str]) -> Pipeline:
@@ -115,9 +124,7 @@ def model_building(train_df: pd.DataFrame, features: list[str]) -> Pipeline:
     return rf_model
 
 
-def model_prediction(
-    unknown_df: pd.DataFrame, features: list[str], model: Pipeline
-) -> pd.DataFrame:
+def model_prediction(unknown_df: pd.DataFrame, features: list[str], model: Pipeline) -> pd.DataFrame:
     X_unknown = unknown_df[features]
     unknown_df["Shadow_Probability"] = model.predict_proba(X_unknown)[:, 1]
 
@@ -136,11 +143,12 @@ if __name__ == "__main__":
 
     full_df = pd.concat([shadow_df, unknown_df])
 
-    exploratory_data_analysis(full_df)
+    # exploratory_data_analysis(full_df)
 
-    features = ["Type", "Flag", "Built", "GT", "DWT", "Length", "Width"]
-    model = model_building(full_df, features)
+    feature_selection(full_df)
 
-    suspect_df = model_prediction(unknown_df, features, model)
-    suspect_df.to_csv(OUTPUT_FILE, index=False)
-    print(suspect_df)
+    # features = ["Type", "Flag", "Built", "GT", "DWT", "Length", "Width"]
+    # model = model_building(full_df, features)
+
+    # suspect_df = model_prediction(unknown_df, features, model)
+    # print(suspect_df)
