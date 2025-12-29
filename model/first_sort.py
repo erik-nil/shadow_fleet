@@ -149,15 +149,20 @@ def model_prediction(unknown_df: pd.DataFrame, features: list[str], model: Pipel
 
     return suspect_df
 
-def model_evaluation(shadow_df: pd.DataFrame, model: Pipeline) -> None:
+def model_oob_evaluation(model: Pipeline) -> int:
     ### Beräknar OOB-score
     rf = model.named_steps["classifier"]
-    print("OOB score:", rf.oob_score_)
+    oob_score = rf.oob_score_
+    return oob_score
+
+
+def model_sensitivity_evaluation(shadow_df: pd.DataFrame, model: Pipeline) -> int:
 
     ### Beräknar sensitivity för modellen
-    
-
-
+    X_shadow = model.named_steps["preprocessor"].transform(shadow_df[features])
+    y_pred = model.named_steps["classifier"].predict(X_shadow)
+    sensitivity = y_pred.mean()  # andelen korrekt klassade shadow-fartyg
+    return sensitivity
 
 if __name__ == "__main__":
 
@@ -177,6 +182,8 @@ if __name__ == "__main__":
 
     feature_importance = feature_evaluation(full_df, model)
 
-    model_evaluation(model)
+    model_oob_evaluation(model)
+
+    model_sensitivity_evaluation(shadow_df, model)
 
 
