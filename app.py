@@ -1,4 +1,5 @@
 import dash
+import json
 from dash import dcc, html, Input, Output, dash_table
 import dash_bootstrap_components as dbc
 import plotly.express as px
@@ -6,11 +7,19 @@ import pandas as pd
 import os
 
 # --- 1. DATA PREP ---
-script_dir = os.path.dirname(os.path.abspath(__file__))
-csv_path = os.path.join(script_dir, "vessels_with_score.csv")
 
 try:
-    df = pd.read_csv(csv_path)
+    with open("model_metrics.json", "r") as f:
+        metrics = json.load(f)
+        sensitivity_score = metrics.get("sensitivity", 0)
+        oob_score = metrics.get("oob_score", 0)
+except FileNotFoundError:
+    sensitivity_score = 0.0  # Default if file is missing
+    oob_score = 0.0  # Default if file is missing
+
+
+try:
+    df = pd.read_csv("vessels_with_score.csv")
 
     # Beräkna ålder
     if "Built" in df.columns:
@@ -370,15 +379,76 @@ app.layout = dbc.Container(
                                 )  # Padding runt hela flikens innehåll
                             ],
                         ),
-                        # TAB 2: MODEL INSIGHTS (Uppdaterad storlek)
+                        # TAB 2: MODEL INSIGHTS
                         dbc.Tab(
                             label="Model Insights",
                             children=[
                                 html.Div(
                                     [
+                                        # --- METRIC CARDS ROW ---
                                         dbc.Row(
                                             [
-                                                # Centrerad kolumn med bredd 8 (istället för 12) för bättre proportioner
+                                                # CARD 1: SENSITIVITY
+                                                dbc.Col(
+                                                    [
+                                                        dbc.Card(
+                                                            [
+                                                                dbc.CardBody(
+                                                                    [
+                                                                        html.H5(
+                                                                            "Model Sensitivity",
+                                                                            className="text-center text-muted text-uppercase",
+                                                                        ),
+                                                                        html.H1(
+                                                                            f"{sensitivity_score:.1%}",
+                                                                            className="text-center text-success fw-bold",
+                                                                        ),
+                                                                        html.P(
+                                                                            "True shadow vessels correctly identified.",
+                                                                            className="text-center small text-muted mb-0",
+                                                                        ),
+                                                                    ]
+                                                                )
+                                                            ],
+                                                            className="shadow-sm border-0 mb-4 h-100",  # h-100 för samma höjd
+                                                        )
+                                                    ],
+                                                    width=4,
+                                                ),
+                                                # CARD 2: OOB SCORE (NYTT!)
+                                                dbc.Col(
+                                                    [
+                                                        dbc.Card(
+                                                            [
+                                                                dbc.CardBody(
+                                                                    [
+                                                                        html.H5(
+                                                                            "OOB Score",
+                                                                            className="text-center text-muted text-uppercase",
+                                                                        ),
+                                                                        html.H1(
+                                                                            f"{oob_score:.1%}",
+                                                                            className="text-center text-primary fw-bold",
+                                                                        ),
+                                                                        html.P(
+                                                                            "Model accuracy on unseen training data.",
+                                                                            className="text-center small text-muted mb-0",
+                                                                        ),
+                                                                    ]
+                                                                )
+                                                            ],
+                                                            className="shadow-sm border-0 mb-4 h-100",
+                                                        )
+                                                    ],
+                                                    width=4,
+                                                ),
+                                            ],
+                                            justify="center",  # Centrerar korten på mitten av sidan
+                                            className="mb-4",
+                                        ),
+                                        # --- FEATURE IMPORTANCE GRAPH ---
+                                        dbc.Row(
+                                            [
                                                 dbc.Col(
                                                     [
                                                         dbc.Card(
@@ -390,7 +460,7 @@ app.layout = dbc.Container(
                                                                             className="mb-3",
                                                                         ),
                                                                         html.P(
-                                                                            "These metrics correspond to the Random Forest model features used in 'first_sort.py'.",
+                                                                            "These metrics correspond to the Random Forest model features.",
                                                                             className="text-muted mb-4",
                                                                         ),
                                                                         dcc.Graph(
@@ -406,22 +476,22 @@ app.layout = dbc.Container(
                                                                                 template="plotly_white",
                                                                                 color="Importance",
                                                                                 color_continuous_scale="Blues",
-                                                                            ),  # Tog bort update_layout(height=600)
+                                                                            ),
                                                                             style={
                                                                                 "height": "45vh"
-                                                                            },  # Samma höjd som övriga grafer
+                                                                            },
                                                                         ),
                                                                     ]
                                                                 )
                                                             ],
-                                                            className="shadow-sm border-0 mt-4",
+                                                            className="shadow-sm border-0",
                                                         )
                                                     ],
                                                     width=8,
                                                     className="mx-auto",
-                                                )  # mx-auto centrerar kolumnen
+                                                )
                                             ]
-                                        )
+                                        ),
                                     ],
                                     className="p-4",
                                 )
