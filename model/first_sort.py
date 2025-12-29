@@ -64,25 +64,15 @@ def exploratory_data_analysis(df: pd.DataFrame):
     print("\nSummary statistics for numerical columns:")
     print(df[num_cols].describe())
 
-def main() -> None:
-    print("1. Laddar och förbereder datamängder...")
-    shadow_df = load_and_clean(SHADOW_FILE, 1)
-    unknown_df = load_and_clean(UNKNOWN_FILE, 0)
+def feature_selection(): ### INTE PÅBÖRJAD
+    return None
 
-    # --- INGEN DOWNSAMPLING ---
-    # Vi använder ALLA data för att få maximal information
-    print(f"2. Slår ihop data: {len(shadow_df)} shadow + {len(unknown_df)} okända...")
-    train_df = pd.concat([shadow_df, unknown_df])
-
-    # --- DEFINIERA FEATURES ---
-    features = ["Type", "Flag", "Built", "GT", "DWT", "Length", "Width"]
+def model_building(train_df: pd.DataFrame, features: list[str]) -> Pipeline:
     X_train = train_df[features]
     y_train = train_df["is_shadow"]
 
-    # --- BYGG PIPELINE ---
-    # (Samma preprocessor som förut...)
-    num_cols = ["Built", "GT", "DWT", "Length", "Width"]
-    cat_cols = ["Type", "Flag"]
+    num_cols = X_train.select_dtypes(include="number").columns.tolist()
+    cat_cols = X_train.select_dtypes(include="object").columns.tolist()
 
     num_transformer = SimpleImputer(strategy="median")
     cat_transformer = Pipeline(
@@ -99,10 +89,7 @@ def main() -> None:
         ]
     )
 
-    # --- DEN VIKTIGA ÄNDRINGEN ---
-    # class_weight='balanced' räknar automatiskt ut att shadow-fartyg är
-    # mer sällsynta och gör dem viktigare för modellen.
-    model = Pipeline(
+    rf_model = Pipeline(
         steps=[
             ("preprocessor", preprocessor),
             (
@@ -117,51 +104,42 @@ def main() -> None:
         ]
     )
 
-    print("3. Tränar modellen på hela datasetet...")
-    model.fit(X_train, y_train)
+    rf_model.fit(X_train, y_train)
 
-    # --- PREDIKTION ---
-    print("4. Analyserar...")
+    return rf_model
+
+def model_prediction(unknown_df: pd.DataFrame, features: list[str] ,model: Pipeline) -> pd.DataFrame:
     X_unknown = unknown_df[features]
     unknown_df["Shadow_Probability"] = model.predict_proba(X_unknown)[:, 1]
 
     # Filtrera på tröskelvärde
     threshold = 0.8
-    priority_list = unknown_df[unknown_df["Shadow_Probability"] >= threshold]
-    priority_list = priority_list.sort_values(by="Shadow_Probability", ascending=False)
+    suspect_df = unknown_df[unknown_df["Shadow_Probability"] >= threshold]
+    suspect_df = suspect_df.sort_values(by="Shadow_Probability", ascending=False)
 
-    priority_list.to_csv(OUTPUT_FILE, index=False)
+    return suspect_df
 
-    print("-" * 40)
-    print(
-        f"KLART! {len(priority_list)} fartyg hittade med sannolikhet över {threshold*100}%."
-    )
-    
-
-    # Extrahera feature importance
-    importances = model.named_steps['classifier'].feature_importances_
-
-    # Omvandla till ett DataFrame
-    feature_names = model.named_steps['preprocessor'].get_feature_names_out()
-    feat_imp_df = pd.DataFrame({
-        'feature': feature_names,
-        'importance': importances
-    }).sort_values(by='importance', ascending=False)
-
-    print(feat_imp_df)
-
-    # Visualisera
-    plt.figure(figsize=(10,6))
-    plt.barh(feat_imp_df['feature'], feat_imp_df['importance'])
-    plt.xlabel("Feature Importance")
-    plt.show()
 
 
 if __name__ == "__main__":
+
     shadow_df = load_and_clean(SHADOW_FILE, 1)
     unknown_df = load_and_clean(UNKNOWN_FILE, 0)
-    df = pd.concat([shadow_df, unknown_df])
 
-    exploratory_data_analysis(df)
+    full_df = pd.concat([shadow_df, unknown_df])
 
-    #main()
+    exploratory_data_analysis(full_df)
+
+    features = ["Type", "Flag", "Built", "GT", "DWT", "Length", "Width"]
+    model = model_building(full_df, features)
+
+    suspect_df = model_prediction(unknown_df, features, model)
+    print(suspect_df)
+
+
+
+
+
+
+
+
