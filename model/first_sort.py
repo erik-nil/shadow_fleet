@@ -9,9 +9,12 @@ from sklearn.utils import resample
 import matplotlib.pyplot as plt
 
 # --- FILNAMN ---
-SHADOW_FILE = "vessel_data/shadow_vessels.csv"  # Dina 600 bekräftade
-UNKNOWN_FILE = "vessel_data/unknown_vessels.csv"  # Dina 8000 okända
-OUTPUT_FILE = "suspect_vessels.csv"
+SHADOW_FILE = (
+    "vessel_data/shadow_vessels.csv"  # Bekräftade skuggfartyg / sakntionerade fartyg
+)
+UNKNOWN_FILE = "vessel_data/unknown_vessels.csv"  # ca 80000 okända tankerfartyg
+OUTPUT_FILE = "vessels_with_score.csv"
+
 
 def load_and_clean(filepath, label: int) -> pd.DataFrame:
     """Laddar data och säkerställer rätt format på features."""
@@ -35,6 +38,7 @@ def load_and_clean(filepath, label: int) -> pd.DataFrame:
     df["is_shadow"] = label
 
     return df
+
 
 def exploratory_data_analysis(df: pd.DataFrame):
     """
@@ -64,8 +68,10 @@ def exploratory_data_analysis(df: pd.DataFrame):
     print("\nSummary statistics for numerical columns:")
     print(df[num_cols].describe())
 
-def feature_selection(): ### INTE PÅBÖRJAD
+
+def feature_selection():  ### INTE PÅBÖRJAD
     return None
+
 
 def model_building(train_df: pd.DataFrame, features: list[str]) -> Pipeline:
     X_train = train_df[features]
@@ -108,17 +114,19 @@ def model_building(train_df: pd.DataFrame, features: list[str]) -> Pipeline:
 
     return rf_model
 
-def model_prediction(unknown_df: pd.DataFrame, features: list[str] ,model: Pipeline) -> pd.DataFrame:
+
+def model_prediction(
+    unknown_df: pd.DataFrame, features: list[str], model: Pipeline
+) -> pd.DataFrame:
     X_unknown = unknown_df[features]
     unknown_df["Shadow_Probability"] = model.predict_proba(X_unknown)[:, 1]
 
     # Filtrera på tröskelvärde
-    threshold = 0.8
+    threshold = 0.0
     suspect_df = unknown_df[unknown_df["Shadow_Probability"] >= threshold]
     suspect_df = suspect_df.sort_values(by="Shadow_Probability", ascending=False)
 
     return suspect_df
-
 
 
 if __name__ == "__main__":
@@ -134,12 +142,5 @@ if __name__ == "__main__":
     model = model_building(full_df, features)
 
     suspect_df = model_prediction(unknown_df, features, model)
+    suspect_df.to_csv(OUTPUT_FILE, index=False)
     print(suspect_df)
-
-
-
-
-
-
-
-
