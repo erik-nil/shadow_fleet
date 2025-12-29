@@ -3,7 +3,7 @@
 ## Overview
 The **Shadow Fleet Intelligence Dashboard** is a data analytics tool designed to identify and visualize potential "shadow fleet" vessels. Ships often used to circumvent sanctions. 
 
-The system uses a Random Forest Machine Learning model (`first_sort.py`) to assign a "Shadow Probability" score to vessels based on features such as **Age**, **Flag**, **Gross Tonnage (GT)**, and **Vessel Type**. The results are visualized in an interactive web dashboard built with **Plotly Dash**.
+The system uses a Random Forest Machine Learning model (`first_sort.py`) to assign a "Shadow Probability" score to vessels based on features such as **Age**, **Flag**, **Gross Tonnage (GT)**, and **Vessel Type**. The results are visualized in an interactive web dashboard built with **Plotly Dash**, this part was done with great help from an LLM (Gemini).
 
 ## Project Structure
 ```text
