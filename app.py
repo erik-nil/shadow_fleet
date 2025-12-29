@@ -13,10 +13,23 @@ try:
         metrics = json.load(f)
         sensitivity_score = metrics.get("sensitivity", 0)
         oob_score = metrics.get("oob_score", 0)
+        feature_data = pd.DataFrame(metrics.get("feature_importance", {}))
 except FileNotFoundError:
     sensitivity_score = 0.0  # Default if file is missing
     oob_score = 0.0  # Default if file is missing
-
+    feature_data = pd.DataFrame(
+        {
+            "Variable": [
+                "Age (Built)",
+                "Flag",
+                "Gross Tonnage (GT)",
+                "Vessel Type",
+                "DWT",
+                "Length/Width",
+            ],
+            "Importance": [0.35, 0.30, 0.15, 0.10, 0.08, 0.02],
+        }
+    )
 
 try:
     df = pd.read_csv("vessels_with_score.csv")
@@ -62,19 +75,7 @@ MAX_AGE = df["Age"].max() * 1.05
 MAX_GT = df["GT"].max() * 1.05
 
 # Feature Importance Data
-feature_data = pd.DataFrame(
-    {
-        "Variable": [
-            "Age (Built)",
-            "Flag",
-            "Gross Tonnage (GT)",
-            "Vessel Type",
-            "DWT",
-            "Length/Width",
-        ],
-        "Importance": [0.35, 0.30, 0.15, 0.10, 0.08, 0.02],
-    }
-)
+
 
 # --- 2. LAYOUT ---
 app = dash.Dash(__name__, external_stylesheets=[dbc.themes.FLATLY])
@@ -467,14 +468,14 @@ app.layout = dbc.Container(
                                                                             id="feature-plot",
                                                                             figure=px.bar(
                                                                                 feature_data.sort_values(
-                                                                                    "Importance",
+                                                                                    "importance",
                                                                                     ascending=True,
                                                                                 ),
-                                                                                x="Importance",
-                                                                                y="Variable",
+                                                                                x="importance",
+                                                                                y="feature",
                                                                                 orientation="h",
                                                                                 template="plotly_white",
-                                                                                color="Importance",
+                                                                                color="importance",
                                                                                 color_continuous_scale="Blues",
                                                                             ),
                                                                             style={

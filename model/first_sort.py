@@ -41,12 +41,8 @@ def load_and_clean(filepath, label: int) -> pd.DataFrame:
 
     return df
 
-<<<<<<< HEAD
 
 def exploratory_data_analysis(df: pd.DataFrame):
-=======
-def exploratory_data_analysis(df: pd.DataFrame) -> None:
->>>>>>> 86a03b4387e39941c202b86be8471f144e71dd6b
     """
     Utför enkel EDA på en DataFrame:
     - Visar grundläggande info
@@ -135,7 +131,7 @@ def model_building(train_df: pd.DataFrame, features: list[str]) -> Pipeline:
                 RandomForestClassifier(
                     n_estimators=300,
                     max_depth=12,
-                    class_weight="balanced", 
+                    class_weight="balanced",
                     random_state=42,
                     oob_score=True,
                 ),
@@ -167,6 +163,7 @@ def model_oob_evaluation(model: Pipeline) -> int:
     rf = model.named_steps["classifier"]
     oob_score = rf.oob_score_
     return oob_score
+
 
 def model_sensitivity_evaluation(shadow_df: pd.DataFrame, model: Pipeline) -> int:
 
@@ -201,6 +198,7 @@ if __name__ == "__main__":
     metrics = {
         "sensitivity": sensitivity,
         "oob_score": oob_score,
+        "feature_importance": feature_importance.to_dict(orient="list"),
     }
     with open("model_metrics.json", "w") as f:
         json.dump(metrics, f)
