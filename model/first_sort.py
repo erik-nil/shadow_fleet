@@ -126,7 +126,7 @@ def model_building(train_df: pd.DataFrame, features: list[str]) -> Pipeline:
                 RandomForestClassifier(
                     n_estimators=300,
                     max_depth=12,
-                    class_weight="balanced",  # <--- HÄR ÄR MAGIN
+                    class_weight="balanced", 
                     random_state=42,
                     oob_score=True
                 ),
