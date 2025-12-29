@@ -155,7 +155,6 @@ def model_oob_evaluation(model: Pipeline) -> int:
     oob_score = rf.oob_score_
     return oob_score
 
-
 def model_sensitivity_evaluation(shadow_df: pd.DataFrame, model: Pipeline) -> int:
 
     ### Beräknar sensitivity för modellen
