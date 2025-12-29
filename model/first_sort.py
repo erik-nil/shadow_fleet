@@ -128,6 +128,7 @@ def model_building(train_df: pd.DataFrame, features: list[str]) -> Pipeline:
                     max_depth=12,
                     class_weight="balanced",  # <--- HÄR ÄR MAGIN
                     random_state=42,
+                    oob_score=True
                 ),
             ),
         ]
@@ -148,6 +149,15 @@ def model_prediction(unknown_df: pd.DataFrame, features: list[str], model: Pipel
 
     return suspect_df
 
+def model_evaluation(shadow_df: pd.DataFrame, model: Pipeline) -> None:
+    ### Beräknar OOB-score
+    rf = model.named_steps["classifier"]
+    print("OOB score:", rf.oob_score_)
+
+    ### Beräknar sensitivity för modellen
+    
+
+
 
 if __name__ == "__main__":
 
@@ -165,4 +175,8 @@ if __name__ == "__main__":
     
     suspect_df = model_prediction(unknown_df, features, model)
 
-    print(feature_evaluation(full_df, model))
+    feature_importance = feature_evaluation(full_df, model)
+
+    model_evaluation(model)
+
+
