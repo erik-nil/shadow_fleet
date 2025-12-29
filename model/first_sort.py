@@ -40,7 +40,7 @@ def load_and_clean(filepath, label: int) -> pd.DataFrame:
 
     return df
 
-def exploratory_data_analysis(df: pd.DataFrame):
+def exploratory_data_analysis(df: pd.DataFrame) -> None:
     """
     Utför enkel EDA på en DataFrame:
     - Visar grundläggande info
